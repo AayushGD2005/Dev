@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>All Reminders</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f8;
+            text-align: center;
+        }
+
+        .container {
+            width: 400px;
+            margin: auto;
+            margin-top: 50px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+
+        button {
+            margin: 5px;
+            padding: 6px 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1> All Reminders</h1>
+
+    <button onclick="goBack()"> Back</button>
+
+
+    <ul id="list"></ul>
+
+</div>
+
+<script>
+
+    let notified = {};
+
+    function goBack() {
+        window.location.href = "index.html";
+    }
+
+    function deleteMedicine(id) {
+        fetch(`/api/delete/${id}`, {
+            method: "DELETE"
+        }).then(() => loadData());
+    }
+
+    function markTaken(id) {
+        fetch(`/api/taken/${id}`, {
+            method: "PUT"
+        }).then(() => loadData());
+    }
+
+    function loadData() {
+        fetch("/api/all")
+        .then(res => res.json())
+        .then(data => {
+            let list = document.getElementById("list");
+            list.innerHTML = "";
+
+            let currentTime = new Date().toTimeString().slice(0,5);
+
+            data.forEach(m => {
+                list.innerHTML += `
+                    <li>
+                        ${m.name} - ${m.time} - ${m.status || "Pending"}
+                        <button onclick="markTaken(${m.id})">Taken</button>
+                        <button onclick="deleteMedicine(${m.id})">Delete</button>
+                    </li>
+                `;
+
+                if (m.time === currentTime && !notified[m.id]) {
+                    new Notification("Medicine Reminder", {
+                        body: "Time to take: " + m.name,
+                    });
+                    notified[m.id] = true;
+                }
+            });
+        });
+    }
+
+    loadData();
+    setInterval(loadData, 60000);
+
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+
+</script>
+
+</body>
+</html>

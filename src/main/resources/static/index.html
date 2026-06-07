@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Medicine Reminder</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f8;
+            text-align: center;
+        }
+
+        .container {
+            width: 300px;
+            margin: auto;
+            margin-top: 50px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 90%;
+            padding: 8px;
+            margin: 5px;
+        }
+
+        button {
+            padding: 8px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        li {
+            margin: 10px;
+        }
+    </style>
+
+</head>
+<body>
+<div class="container">
+
+<h2>Add Medicine</h2><h1>Medicine Reminder</h1>
+
+    <button onclick="goToAll()">View All Reminders</button>
+
+    <select id="type" onchange="toggleDate()">
+        <option value="ONCE">One Time</option>
+        <option value="DAILY">Daily</option>
+    </select>
+<input id="name" placeholder="Name"><br><br>
+<input id="dosage" placeholder="Dosage"><br><br>
+<input type="time" id="time" placeholder="Time"><br><br>
+    <div id="dateField">
+        <input type="date" id="date">
+    </div>
+
+<button onclick="addMedicine()">Add</button>
+    <button onclick="goToAll()">View All Reminders</button>
+
+
+
+<script>
+    function toggleDate() {
+    let type = document.getElementById("type").value;
+    let dateField = document.getElementById("dateField");
+
+    if (type === "DAILY") {
+        dateField.style.display = "none";
+    } else {
+        dateField.style.display = "block";
+    }
+}
+    function goToAll() {
+    window.location.href = "All.html";
+}
+    function deleteMedicine(id) {
+    fetch(`/api/delete/${id}`, {
+        method: "DELETE"
+    }).then(() => loadData());
+}
+    function markTaken(id) {
+    fetch(`/api/taken/${id}`, {
+        method: "PUT"
+    }).then(() => loadData());
+}
+
+       function addMedicine() {
+let type = document.getElementById("type").value;
+    let name = document.getElementById("name").value.trim();
+    let dosage = document.getElementById("dosage").value.trim();
+    let time = document.getElementById("time").value;
+    let date = document.getElementById("date").value;
+
+
+
+   if (!name || !dosage || !time) {
+    alert("Please fill required fields");
+    return;
+}
+
+if (type === "ONCE" && !date) {
+    alert("Please select date");
+    return;
+}
+    fetch("/api/add", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+       body: JSON.stringify({
+    name: name,
+    dosage: dosage,
+    time: time,
+    date: date,
+    type: type
+})
+    })
+    .then(res => res.json())
+    .then(() => {
+        console.log("Added successfully");
+        loadData();
+    })
+    .catch(err => console.error("Error:", err));
+}
+    let notified = {};
+        function loadData() {
+            fetch("/api/all")
+            .then(res => res.json())
+            .then(data => {
+                let list = document.getElementById("list");
+                list.innerHTML = "";
+
+                let currentTime = new Date().toTimeString().slice(0,5);
+
+                data.forEach(m => {
+                    list.innerHTML += `
+    <li>
+        ${m.name} - ${m.time} - ${m.status || "Pending"}
+        <button onclick="markTaken(${m.id})">Taken</button>
+        <button onclick="deleteMedicine(${m.id})">Delete</button>
+    </li>
+`;
+
+                    if (m.time === currentTime && !notified[m.id]) {
+    new Notification("Medicine Reminder", {
+        body: "Time to take: " + m.name,
+    });
+    notified[m.id] = true;
+}
+                });
+            });
+        }
+
+
+        loadData();
+
+
+        setInterval(loadData, 60000);
+        if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+toggleDate();
+</script>
+</div>
+</body>
+</html>
