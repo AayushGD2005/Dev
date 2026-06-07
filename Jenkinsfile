@@ -10,24 +10,30 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                url: 'https://github.com/AayushGD2005/Dev.git'
+                git 'https://github.com/AayushGD2005/Dev.git'
             }
         }
 
         stage('Build') {
             steps {
-                bat '.\\mvnw.cmd clean package -DskipTests'
+                bat 'mvn clean package -DskipTests'
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Build Successful!'
-        }
-        failure {
-            echo 'Build Failed!'
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarScanner'
+                    withSonarQubeEnv('SonarQube') {
+                        bat """
+                        ${scannerHome}\\bin\\sonar-scanner.bat ^
+                        -Dsonar.projectKey=Dev ^
+                        -Dsonar.projectName=Dev ^
+                        -Dsonar.sources=src
+                        """
+                    }
+                }
+            }
         }
     }
 }
