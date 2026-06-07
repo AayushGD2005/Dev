@@ -8,12 +8,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/AayushGD2005/Dev.git'
-            }
-        }
-
         stage('Build') {
             steps {
                 bat 'mvn clean package -DskipTests'
@@ -24,12 +18,14 @@ pipeline {
             steps {
                 script {
                     def scannerHome = tool 'SonarScanner'
+
                     withSonarQubeEnv('SonarQube') {
                         bat """
                         ${scannerHome}\\bin\\sonar-scanner.bat ^
                         -Dsonar.projectKey=Dev ^
                         -Dsonar.projectName=Dev ^
-                        -Dsonar.sources=src
+                        -Dsonar.sources=src ^
+                        -Dsonar.java.binaries=target/classes
                         """
                     }
                 }
