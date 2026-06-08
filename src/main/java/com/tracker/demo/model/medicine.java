@@ -6,7 +6,7 @@ import lombok.Data;
 
 
 
-@Entity
+// @Entity
 @Data
 public class medicine {
 
