@@ -3,7 +3,7 @@ package com.tracker.demo.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-@Entity
+// @Entity
 @Data
 public class user {
 
