@@ -1,3 +1,4 @@
+```groovy
 pipeline {
     agent any
 
@@ -64,6 +65,18 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to Render') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'render-hook',
+                           variable: 'RENDER_HOOK')
+                ]) {
+
+                    bat 'curl -X POST %RENDER_HOOK%'
+                }
+            }
+        }
     }
 
     post {
@@ -76,3 +89,4 @@ pipeline {
         }
     }
 }
+```
